@@ -18,9 +18,14 @@ public class FoodItem {
   private double calories;
   private double protein;
   private double fat;
-  private double carbs;
-  private double sugar;
-  private double fiber;
+  private Carbohydrates carbohydrates;
   // maybe vitamins and minerals? saturated fats?
+
+  @Data
+  public static class Carbohydrates {
+    private double sugar;
+    private double fiber;
+    private double carbsTotal;
+  }
 
 }
