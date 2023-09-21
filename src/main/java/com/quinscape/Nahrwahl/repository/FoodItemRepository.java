@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface FoodItemRepository extends MongoRepository<FoodItem, String> {
 
   Optional<FoodItem> findByNameIgnoreCase(String name);
+
 }
