@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,21 @@ public class FoodItemService {
     }
   }
 
+  public boolean deleteFoodItem(String id) {
 
+    if(foodItemRepository.existsById(id)) {
+      log.info("Service: Deleting food item: " + id);
+      foodItemRepository.deleteById(id);
+      return true;
+    }
+    log.info("Service: Couldn't delete food item. Not found!");
+    return false;
+  }
+
+
+  public Optional<FoodItem> getFoodItemById(String id) {
+    return foodItemRepository.findById(id);
+  }
 
 
 

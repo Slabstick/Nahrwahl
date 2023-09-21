@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class FoodItem {
 
   @Id
-  private ObjectId id;
+  private String id;
   private String name;
   private ObjectId user_id; // reference to user who added the item
   private Nutrients nutrients;
