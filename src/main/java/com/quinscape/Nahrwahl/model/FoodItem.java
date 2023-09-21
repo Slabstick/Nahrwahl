@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 // Don't need getters and setters with @Data
 @Data
 @Document(collection = "food_items")
-public class FoodItem implements Comparable<FoodItem>{
+public class FoodItem {
 
   @Id
   private ObjectId id;
@@ -16,26 +16,6 @@ public class FoodItem implements Comparable<FoodItem>{
   private ObjectId user_id; // reference to user who added the item
   private Nutrients nutrients;
 
-  @Override
-  public int compareTo(FoodItem other) {
-    return this.name.compareTo(other.name);
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) {
-      return true;
-    }
-    if (object == null || getClass() != object.getClass()) {
-      return false;
-    }
-
-    FoodItem other = (FoodItem) object;
-
-    // Deep equality check:
-    return nutrients.equals(other.nutrients);
-
-  }
 
   // maybe vitamins and minerals? saturated fats?
 

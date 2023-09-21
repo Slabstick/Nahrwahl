@@ -28,11 +28,18 @@ public class FoodItemController {
   @GetMapping("")
   public ResponseEntity<List<FoodItem>> getAllFoodItems(
       @RequestParam(name = "sortBy", required = false, defaultValue = "name") String sortBy,
-      @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
+      @RequestParam(name = "direction", required = false, defaultValue = "DESC") String direction) {
 
-    log.info("Controller: Fetching sorted list of food items");
+    log.info("Controller: Fetching list of food items sorted by " + sortBy);
 
-    Sort sort = Sort.by(Direction.fromString(direction), "nutrients." + sortBy);
+    // Alias to be able to sort by fiber, sugar and carbsTotal instead of needing
+    // to add the prefix carbohydrates. in the params.
+    String prefixedSortBy = "nutrients." + sortBy;
+    if ("fiber".equals(sortBy) || "sugar".equals(sortBy) || "carbsTotal".equals(sortBy)) {
+      prefixedSortBy = "nutrients.carbohydrates." + sortBy;
+    }
+
+    Sort sort = Sort.by(Direction.fromString(direction), prefixedSortBy);
 
     List<FoodItem> foodItems = foodItemService.getAllFoodItems(sort);
 
