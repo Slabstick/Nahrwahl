@@ -1,19 +1,23 @@
 package com.quinscape.Nahrwahl.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-// Don't need getters and setters with @Data
 @Data
-@Document(collection = "food_items")
+@Document(collection = "foodItems")
 public class FoodItem {
 
+  public FoodItem() {}
+
   @Id
-  private String id;
+  @JsonSerialize(using = ObjectIdSerializer.class)
+  private ObjectId id;
+
   private String name;
-  private ObjectId user_id; // reference to user who added the item
+  private String user_id; // reference to user who added the item
   private Nutrients nutrients;
 
 

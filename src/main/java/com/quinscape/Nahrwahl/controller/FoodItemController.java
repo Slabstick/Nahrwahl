@@ -32,17 +32,17 @@ public class FoodItemController {
   @GetMapping("")
   public ResponseEntity<List<FoodItem>> getAllFoodItems(
       @RequestParam(name = "sortBy", required = false, defaultValue = "name") String sortBy,
-      @RequestParam(name = "direction", required = false, defaultValue = "DESC") String direction) {
+      @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
 
     log.info("Controller: Fetching list of food items sorted by " + sortBy);
-
-    // Alias to be able to sort by fiber, sugar and carbsTotal instead of needing
+    // Aliases to be able to sort by fiber, sugar and carbsTotal instead of needing
     // to add the prefix carbohydrates. in the params.
     String prefixedSortBy = "nutrients." + sortBy;
     if ("fiber".equals(sortBy) || "sugar".equals(sortBy) || "carbsTotal".equals(sortBy)) {
       prefixedSortBy = "nutrients.carbohydrates." + sortBy;
+    } else if ("name".equals(sortBy)) {
+      prefixedSortBy = sortBy;
     }
-
     Sort sort = Sort.by(Direction.fromString(direction), prefixedSortBy);
 
     List<FoodItem> foodItems = foodItemService.getAllFoodItems(sort);
@@ -70,10 +70,10 @@ public class FoodItemController {
     return new ResponseEntity<>(savedFoodItems, HttpStatus.CREATED);
   }
 
-  @PatchMapping("")
-  public ResponseEntity<FoodItem> updateFoodItem(@RequestBody FoodItem foodItemToChange) {
-    log.info("Controller: Updating food item: " + foodItemToChange.getName());
-    FoodItem updatedFoodItem = foodItemService.createOrUpdateFoodItem(foodItemToChange);
+  @PatchMapping("/{id}")
+  public ResponseEntity<FoodItem> updateFoodItem(@PathVariable String id, @RequestBody FoodItem foodItem) {
+    log.info("Controller: Updating food item Id: " + id);
+    FoodItem updatedFoodItem = foodItemService.updateFoodItem(id, foodItem);
     return new ResponseEntity<>(updatedFoodItem, HttpStatus.OK);
   }
 
@@ -92,6 +92,12 @@ public class FoodItemController {
     Optional<FoodItem> optionalFoodItem = foodItemService.getFoodItemById(id);
     return optionalFoodItem.map(foodItem -> new ResponseEntity<>(foodItem, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<List<FoodItem>> searchFoodItems(@RequestParam String searchTerm) {
+    List<FoodItem> foodItems = foodItemService.searchFoodItems(searchTerm);
+    return new ResponseEntity<>(foodItems, HttpStatus.OK);
   }
 
 }

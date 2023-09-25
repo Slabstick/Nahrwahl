@@ -1,12 +1,12 @@
 package com.quinscape.Nahrwahl.service;
 
+import com.quinscape.Nahrwahl.exception.FoodItemNotFoundException;
 import com.quinscape.Nahrwahl.model.FoodItem;
 import com.quinscape.Nahrwahl.repository.FoodItemRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +50,18 @@ public class FoodItemService {
     return foodItemRepository.findById(id);
   }
 
+  public List<FoodItem> searchFoodItems(String searchTerm) {
+    return foodItemRepository.findByNameContainingIgnoreCase(searchTerm);
+  }
 
+  public FoodItem updateFoodItem(String id, FoodItem updatedFoodItem) {
+    Optional<FoodItem> optionalOriginalFoodItem = foodItemRepository.findById(id);
+
+    return optionalOriginalFoodItem.map(originalFoodItem -> {
+      Optional.ofNullable(updatedFoodItem.getName()).ifPresent(originalFoodItem::setName);
+      Optional.ofNullable(updatedFoodItem.getNutrients()).ifPresent(originalFoodItem::setNutrients);
+      return foodItemRepository.save(originalFoodItem);
+    }).orElseThrow(() -> new FoodItemNotFoundException("Food item with id " + id + " not found."));
+  }
 
 }
