@@ -4,7 +4,6 @@ import com.quinscape.Nahrwahl.model.FoodItem;
 import com.quinscape.Nahrwahl.service.FoodItemService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -29,7 +28,7 @@ public class FoodItemController {
 
   private final FoodItemService foodItemService;
 
-  @GetMapping("")
+  @GetMapping
   public ResponseEntity<List<FoodItem>> getAllFoodItems(
       @RequestParam(name = "sortBy", required = false, defaultValue = "name") String sortBy,
       @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
@@ -37,6 +36,7 @@ public class FoodItemController {
     log.info("Controller: Fetching list of food items sorted by " + sortBy);
     // Aliases to be able to sort by fiber, sugar and carbsTotal instead of needing
     // to add the prefix carbohydrates. in the params.
+    // ToDO: In den Service verschieben -> 2 Methoden (sortiert & unsortiert)
     String prefixedSortBy = "nutrients." + sortBy;
     if ("fiber".equals(sortBy) || "sugar".equals(sortBy) || "carbsTotal".equals(sortBy)) {
       prefixedSortBy = "nutrients.carbohydrates." + sortBy;
@@ -50,7 +50,7 @@ public class FoodItemController {
     return new ResponseEntity<>(foodItems, HttpStatus.OK);
   }
 
-  @PostMapping("")
+  @PostMapping
   public ResponseEntity<FoodItem> createOrUpdateFoodItem(@RequestBody FoodItem newFoodItem) {
     log.info("Controller: Creating or updating Food Item: " + newFoodItem.getName());
     FoodItem savedFoodItem = foodItemService.createOrUpdateFoodItem(newFoodItem);
@@ -62,6 +62,8 @@ public class FoodItemController {
     log.info("Controller: Creating or updating multiple food items");
     List<FoodItem> savedFoodItems = new ArrayList<>();
 
+    //ToDo: Aus der Foreach ein Stream machen!
+    //ToDo: Wegschmeißen und Methode im Service für mehrere erstellen (createFoodItems)
     for(FoodItem newFoodItem : newFoodItems) {
       FoodItem savedFoodItem = foodItemService.createOrUpdateFoodItem(newFoodItem);
       savedFoodItems.add(savedFoodItem);
@@ -89,8 +91,8 @@ public class FoodItemController {
 
   @GetMapping("/{id}")
   public ResponseEntity<FoodItem> getFoodItemById(@PathVariable String id) {
-    Optional<FoodItem> optionalFoodItem = foodItemService.getFoodItemById(id);
-    return optionalFoodItem.map(foodItem -> new ResponseEntity<>(foodItem, HttpStatus.OK))
+    return foodItemService.getFoodItemById(id)
+        .map(foodItem -> new ResponseEntity<>(foodItem, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
