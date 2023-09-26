@@ -41,19 +41,6 @@ public class FoodItemService {
 
   }
 
-//  public FoodItem createOrUpdateFoodItemOld(FoodItem newFoodItem) {
-//    log.info("Service: Creating food item: " + newFoodItem.getName());
-//    Optional<FoodItem> optionalExistingFoodItem = foodItemRepository.findByNameIgnoreCase(newFoodItem.getName());
-//    FoodItem itemToUpdate = newFoodItem;
-//    if(optionalExistingFoodItem.isPresent()) {
-//      log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
-//      FoodItem existingFoodItem = optionalExistingFoodItem.get();
-//      existingFoodItem.setNutrients(newFoodItem.getNutrients());
-//      itemToUpdate = existingFoodItem;
-//    }
-//    return foodItemRepository.save(itemToUpdate);
-//  }
-
   public FoodItem createOrUpdateFoodItem(FoodItem newFoodItem) {
     log.info("Service: Creating food item: " + newFoodItem.getName());
 
