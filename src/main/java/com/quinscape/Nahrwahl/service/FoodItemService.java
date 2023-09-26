@@ -5,11 +5,13 @@ import com.quinscape.Nahrwahl.model.FoodItem;
 import com.quinscape.Nahrwahl.repository.FoodItemRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -19,23 +21,58 @@ public class FoodItemService {
 
   private final FoodItemRepository foodItemRepository;
 
-  public List<FoodItem> getAllFoodItems(Sort sort) {
+
+  public List<FoodItem> getAllFoodItemsSorted(String sortBy, Direction direction) {
+    String prefixedSortBy = getPrefixedSortBy(sortBy);
+    Sort sort = Sort.by(direction, prefixedSortBy);
     return foodItemRepository.findAll(sort);
   }
 
-  //ToDo: CreateOrUpdateFoodItems() erstellen und in einer @Transaction foodItemRepository.save()
+  private String getPrefixedSortBy(String sortBy) {
+    String prefixedSortBy = "nutrients." + sortBy;
+
+    if ("fiber".equals(sortBy) || "sugar".equals(sortBy) || "carbsTotal".equals(sortBy)) {
+      prefixedSortBy = "nutrients.carbohydrates." + sortBy;
+    } else if ("name".equals(sortBy)) {
+      prefixedSortBy = "name";
+    }
+
+    return prefixedSortBy;
+
+  }
+
+//  public FoodItem createOrUpdateFoodItemOld(FoodItem newFoodItem) {
+//    log.info("Service: Creating food item: " + newFoodItem.getName());
+//    Optional<FoodItem> optionalExistingFoodItem = foodItemRepository.findByNameIgnoreCase(newFoodItem.getName());
+//    FoodItem itemToUpdate = newFoodItem;
+//    if(optionalExistingFoodItem.isPresent()) {
+//      log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
+//      FoodItem existingFoodItem = optionalExistingFoodItem.get();
+//      existingFoodItem.setNutrients(newFoodItem.getNutrients());
+//      itemToUpdate = existingFoodItem;
+//    }
+//    return foodItemRepository.save(itemToUpdate);
+//  }
+
   public FoodItem createOrUpdateFoodItem(FoodItem newFoodItem) {
     log.info("Service: Creating food item: " + newFoodItem.getName());
-    Optional<FoodItem> existingFoodItem = foodItemRepository.findByNameIgnoreCase(newFoodItem.getName());
-    if(existingFoodItem.isPresent()) {
-      log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
-      FoodItem toUpdate = existingFoodItem.get();
-      toUpdate.setNutrients(newFoodItem.getNutrients());
-      //ToDO: Else Teil wegschmeißen und nur ein return
-      return foodItemRepository.save(toUpdate);
-    } else {
-      return foodItemRepository.save(newFoodItem);
-    }
+
+    Optional<FoodItem> optionalExistingFoodItem = foodItemRepository.findByNameIgnoreCase(newFoodItem.getName());
+
+    return foodItemRepository.save(
+      optionalExistingFoodItem.map(existingFoodItem -> {
+        log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
+        existingFoodItem.setNutrients(newFoodItem.getNutrients());
+        return existingFoodItem;
+      }).orElse(newFoodItem)
+    );
+  }
+
+  @Transactional
+  public List<FoodItem> createOrUpdateFoodItemsBulk(List<FoodItem> newFoodItems) {
+    return newFoodItems.stream()
+        .map(this::createOrUpdateFoodItem)
+        .collect(Collectors.toList());
   }
 
   public boolean deleteFoodItem(String id) {
@@ -45,9 +82,7 @@ public class FoodItemService {
       foodItemRepository.deleteById(id);
       return true;
     }
-    //ToDo: Exception werfen statt loggen
-    log.info("Service: Couldn't delete food item. Not found!");
-    return false;
+    throw new FoodItemNotFoundException("Service: Couldn't delete food item with id: " + id + " not found!");
   }
 
 

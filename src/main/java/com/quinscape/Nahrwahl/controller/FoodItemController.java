@@ -2,11 +2,9 @@ package com.quinscape.Nahrwahl.controller;
 
 import com.quinscape.Nahrwahl.model.FoodItem;
 import com.quinscape.Nahrwahl.service.FoodItemService;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,18 +32,8 @@ public class FoodItemController {
       @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
 
     log.info("Controller: Fetching list of food items sorted by " + sortBy);
-    // Aliases to be able to sort by fiber, sugar and carbsTotal instead of needing
-    // to add the prefix carbohydrates. in the params.
-    // ToDO: In den Service verschieben -> 2 Methoden (sortiert & unsortiert)
-    String prefixedSortBy = "nutrients." + sortBy;
-    if ("fiber".equals(sortBy) || "sugar".equals(sortBy) || "carbsTotal".equals(sortBy)) {
-      prefixedSortBy = "nutrients.carbohydrates." + sortBy;
-    } else if ("name".equals(sortBy)) {
-      prefixedSortBy = sortBy;
-    }
-    Sort sort = Sort.by(Direction.fromString(direction), prefixedSortBy);
-
-    List<FoodItem> foodItems = foodItemService.getAllFoodItems(sort);
+    Direction sortDirection = Direction.fromString(direction);
+    List<FoodItem> foodItems = foodItemService.getAllFoodItemsSorted(sortBy, sortDirection);
 
     return new ResponseEntity<>(foodItems, HttpStatus.OK);
   }
@@ -59,17 +47,8 @@ public class FoodItemController {
 
   @PostMapping("/bulk")
   public ResponseEntity<List<FoodItem>> createOrUpdateFoodItems(@RequestBody List<FoodItem> newFoodItems) {
-    log.info("Controller: Creating or updating multiple food items");
-    List<FoodItem> savedFoodItems = new ArrayList<>();
-
-    //ToDo: Aus der Foreach ein Stream machen!
-    //ToDo: Wegschmeißen und Methode im Service für mehrere erstellen (createFoodItems)
-    for(FoodItem newFoodItem : newFoodItems) {
-      FoodItem savedFoodItem = foodItemService.createOrUpdateFoodItem(newFoodItem);
-      savedFoodItems.add(savedFoodItem);
-    }
-
-    return new ResponseEntity<>(savedFoodItems, HttpStatus.CREATED);
+    log.info("Controller: Creating or updating one or multiple food items");
+    return new ResponseEntity<>(foodItemService.createOrUpdateFoodItemsBulk(newFoodItems), HttpStatus.CREATED);
   }
 
   @PatchMapping("/{id}")
