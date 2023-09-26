@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FoodItemService {
 
-
   private final FoodItemRepository foodItemRepository;
-
 
   public List<FoodItem> getAllFoodItemsSorted(String sortBy, Direction direction) {
     String prefixedSortBy = getPrefixedSortBy(sortBy);
@@ -44,32 +42,30 @@ public class FoodItemService {
   public FoodItem createOrUpdateFoodItem(FoodItem newFoodItem) {
     log.info("Service: Creating food item: " + newFoodItem.getName());
 
-    Optional<FoodItem> optionalExistingFoodItem = foodItemRepository.findByNameIgnoreCase(newFoodItem.getName());
+    Optional<FoodItem> optionalExistingFoodItem = foodItemRepository.findByNameIgnoreCase(
+        newFoodItem.getName());
 
-    return foodItemRepository.save(
-      optionalExistingFoodItem.map(existingFoodItem -> {
-        log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
-        existingFoodItem.setNutrients(newFoodItem.getNutrients());
-        return existingFoodItem;
-      }).orElse(newFoodItem)
-    );
+    return foodItemRepository.save(optionalExistingFoodItem.map(existingFoodItem -> {
+      log.info("Service: " + newFoodItem.getName() + " already exists. Updating instead.");
+      existingFoodItem.setNutrients(newFoodItem.getNutrients());
+      return existingFoodItem;
+    }).orElse(newFoodItem));
   }
 
   @Transactional
   public List<FoodItem> createOrUpdateFoodItemsBulk(List<FoodItem> newFoodItems) {
-    return newFoodItems.stream()
-        .map(this::createOrUpdateFoodItem)
-        .collect(Collectors.toList());
+    return newFoodItems.stream().map(this::createOrUpdateFoodItem).collect(Collectors.toList());
   }
 
   public boolean deleteFoodItem(String id) {
 
-    if(foodItemRepository.existsById(id)) {
+    if (foodItemRepository.existsById(id)) {
       log.info("Service: Deleting food item: " + id);
       foodItemRepository.deleteById(id);
       return true;
     }
-    throw new FoodItemNotFoundException("Service: Couldn't delete food item with id: " + id + " not found!");
+    throw new FoodItemNotFoundException(
+        "Service: Couldn't delete food item with id: " + id + " not found!");
   }
 
 
@@ -82,13 +78,11 @@ public class FoodItemService {
   }
 
   public FoodItem updateFoodItem(String id, FoodItem updatedFoodItem) {
-    return foodItemRepository.findById(id)
-        .map(originalFoodItem -> {
+    return foodItemRepository.findById(id).map(originalFoodItem -> {
       Optional.ofNullable(updatedFoodItem.getName()).ifPresent(originalFoodItem::setName);
       Optional.ofNullable(updatedFoodItem.getNutrients()).ifPresent(originalFoodItem::setNutrients);
       return foodItemRepository.save(originalFoodItem);
-    })
-        .orElseThrow(() -> new FoodItemNotFoundException("Food item with id " + id + " not found."));
+    }).orElseThrow(() -> new FoodItemNotFoundException("Food item with id " + id + " not found."));
   }
 
 }

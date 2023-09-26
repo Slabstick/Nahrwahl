@@ -46,13 +46,17 @@ public class FoodItemController {
   }
 
   @PostMapping("/bulk")
-  public ResponseEntity<List<FoodItem>> createOrUpdateFoodItems(@RequestBody List<FoodItem> newFoodItems) {
+  public ResponseEntity<List<FoodItem>> createOrUpdateFoodItems(
+      @RequestBody List<FoodItem> newFoodItems) {
     log.info("Controller: Creating or updating one or multiple food items");
-    return new ResponseEntity<>(foodItemService.createOrUpdateFoodItemsBulk(newFoodItems), HttpStatus.CREATED);
+    return new ResponseEntity<>(foodItemService.createOrUpdateFoodItemsBulk(newFoodItems),
+        HttpStatus.CREATED);
   }
 
+
   @PatchMapping("/{id}")
-  public ResponseEntity<FoodItem> updateFoodItem(@PathVariable String id, @RequestBody FoodItem foodItem) {
+  public ResponseEntity<FoodItem> updateFoodItem(@PathVariable String id,
+      @RequestBody FoodItem foodItem) {
     log.info("Controller: Updating food item Id: " + id);
     FoodItem updatedFoodItem = foodItemService.updateFoodItem(id, foodItem);
     return new ResponseEntity<>(updatedFoodItem, HttpStatus.OK);
@@ -61,7 +65,7 @@ public class FoodItemController {
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteFoodItem(@PathVariable String id) {
     log.info("Controller: Deleting food item");
-    if (foodItemService.deleteFoodItem(id)){
+    if (foodItemService.deleteFoodItem(id)) {
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     } else {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
