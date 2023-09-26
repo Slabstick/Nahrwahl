@@ -1,6 +1,6 @@
-package com.quinscape.Nahrwahl.model;
+package com.quinscape.Nahrwahl.model.foodItem;
+
 import lombok.Data;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class FoodItem {
 
   @Id
-  private ObjectId id;
+  private String id;
   private String name;
   private String user_id; // reference to user who added the item
   private Nutrients nutrients;

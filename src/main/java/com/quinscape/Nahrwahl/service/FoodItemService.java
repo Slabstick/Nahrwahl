@@ -1,7 +1,7 @@
 package com.quinscape.Nahrwahl.service;
 
 import com.quinscape.Nahrwahl.exception.FoodItemNotFoundException;
-import com.quinscape.Nahrwahl.model.FoodItem;
+import com.quinscape.Nahrwahl.model.foodItem.FoodItem;
 import com.quinscape.Nahrwahl.repository.FoodItemRepository;
 import java.util.List;
 import java.util.Optional;

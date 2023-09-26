@@ -1,6 +1,6 @@
 package com.quinscape.Nahrwahl.controller;
 
-import com.quinscape.Nahrwahl.model.FoodItem;
+import com.quinscape.Nahrwahl.model.foodItem.FoodItem;
 import com.quinscape.Nahrwahl.service.FoodItemService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

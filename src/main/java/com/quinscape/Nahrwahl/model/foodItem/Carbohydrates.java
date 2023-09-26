@@ -1,4 +1,4 @@
-package com.quinscape.Nahrwahl.model;
+package com.quinscape.Nahrwahl.model.foodItem;
 
 import lombok.Data;
 
