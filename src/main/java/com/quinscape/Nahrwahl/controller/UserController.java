@@ -25,5 +25,5 @@ public class UserController {
     return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
   }
 
-
+// ToDo: /profile /update /logout?
 }
