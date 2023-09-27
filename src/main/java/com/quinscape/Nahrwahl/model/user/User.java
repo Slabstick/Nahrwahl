@@ -25,7 +25,7 @@ public class User {
   private List<String> foodItems; // List of IDs
   private Date createdAt;
   private Date updatedAt;
-  // Maybe List<String> roles;
+  private List<String> roles;
   // Maybe Preferences?
 
 
