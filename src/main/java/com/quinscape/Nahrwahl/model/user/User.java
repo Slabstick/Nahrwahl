@@ -1,6 +1,6 @@
 package com.quinscape.Nahrwahl.model.user;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,8 +23,8 @@ public class User {
   private String lastName;
   private List<String> nutritionLogs; // List of IDs
   private List<String> foodItems; // List of IDs
-  private Date createdAt;
-  private Date updatedAt;
+  private Instant createdAt;
+  private Instant updatedAt;
   private List<String> roles;
   // Maybe Preferences?
 

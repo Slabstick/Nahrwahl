@@ -1,8 +1,9 @@
 package com.quinscape.Nahrwahl.service;
 
+import com.quinscape.Nahrwahl.exception.UsernameAlreadyExistsException;
 import com.quinscape.Nahrwahl.model.user.User;
 import com.quinscape.Nahrwahl.repository.UserRepository;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -36,15 +38,35 @@ public class UserService implements UserDetailsService {
         .password(user.getPassword()).authorities(authorities).build();
   }
 
-  public User saveNewUser(User user) {
+  @Transactional
+  public User saveNewUser(User user) throws UsernameAlreadyExistsException {
 
+    checkIfUsernameExists(user.getUsername());
+    hashUserPassword(user);
+    setTimestamps(user);
+
+    log.info("Saving new user");
+    return userRepository.save(user);
+
+  }
+
+  private void checkIfUsernameExists(String username) throws UsernameAlreadyExistsException {
+    Optional<User> existingUser = userRepository.findByUsername(username);
+    if (existingUser.isPresent()) {
+      log.info("Username already exists at creation. Throwing exception!");
+      throw new UsernameAlreadyExistsException("Username already exists!");
+    }
+  }
+
+  private void hashUserPassword(User user) {
     String hashedPassword = passwordEncoder.encode(user.getPassword());
     user.setPassword(hashedPassword);
+  }
 
-    user.setCreatedAt(new Date());
-    user.setUpdatedAt(new Date());
-
-    return userRepository.save(user);
+  private void setTimestamps(User user) {
+    Instant today = Instant.now();
+    user.setCreatedAt(today);
+    user.setUpdatedAt(today);
 
   }
 
