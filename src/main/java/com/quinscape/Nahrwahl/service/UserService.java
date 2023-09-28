@@ -3,14 +3,15 @@ package com.quinscape.Nahrwahl.service;
 import com.quinscape.Nahrwahl.exception.UsernameAlreadyExistsException;
 import com.quinscape.Nahrwahl.model.user.User;
 import com.quinscape.Nahrwahl.repository.UserRepository;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,14 +29,22 @@ public class UserService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    User user = userRepository.findByUsername(username).orElseThrow(
-        () -> new UsernameNotFoundException("User not found with username: " + username));
+    User user = userRepository
+        .findByUsername(username)
+        .orElseThrow(
+            () -> new UsernameNotFoundException("User not found with username: " + username));
 
-    List<GrantedAuthority> authorities = user.getRoles().stream().map(SimpleGrantedAuthority::new)
+    List<GrantedAuthority> authorities = user
+        .getRoles()
+        .stream()
+        .map(SimpleGrantedAuthority::new)
         .collect(Collectors.toList());
 
-    return org.springframework.security.core.userdetails.User.withUsername(username)
-        .password(user.getPassword()).authorities(authorities).build();
+    return org.springframework.security.core.userdetails.User
+        .withUsername(username)
+        .password(user.getPassword())
+        .authorities(authorities)
+        .build();
   }
 
   @Transactional
@@ -43,7 +52,6 @@ public class UserService implements UserDetailsService {
 
     checkIfUsernameExists(user.getUsername());
     hashUserPassword(user);
-    setTimestamps(user);
 
     log.info("Saving new user");
     return userRepository.save(user);
@@ -63,16 +71,38 @@ public class UserService implements UserDetailsService {
     user.setPassword(hashedPassword);
   }
 
-  private void setTimestamps(User user) {
-    Instant today = Instant.now();
-    user.setCreatedAt(today);
-    user.setUpdatedAt(today);
-
-  }
 
   public Optional<User> findByUsername(String username) {
     return userRepository.findByUsername(username);
   }
 
+  public Optional<User> getUserProfile(String username) {
+    Authentication authentication = SecurityContextHolder
+        .getContext()
+        .getAuthentication();
+    String currentUsername = authentication.getName();
+    boolean isAdmin = isAdmin(authentication);
+    if (username.equals(currentUsername)) {
+      Optional<User> user = findByUsername(username);
+      return user.map(u -> isAdmin ? u : sanitizeUserForProfile(u));
+
+    }
+    return Optional.empty();
+  }
+
+  private User sanitizeUserForProfile(User user) {
+    user.setPassword(null);
+    user.setLastName(null);
+    user.setFirstName(null);
+
+    return user;
+  }
+
+  private boolean isAdmin(Authentication authentication) {
+    return authentication
+        .getAuthorities()
+        .stream()
+        .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
+  }
 
 }

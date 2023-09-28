@@ -5,7 +5,9 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -23,7 +25,9 @@ public class User {
   private String lastName;
   private List<String> nutritionLogs; // List of IDs
   private List<String> foodItems; // List of IDs
+  @CreatedDate
   private Instant createdAt;
+  @LastModifiedDate
   private Instant updatedAt;
   private List<String> roles;
   // Maybe Preferences?
