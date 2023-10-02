@@ -25,7 +25,7 @@ public class DatabaseInitializer {
       User admin = new User();
       admin.setUsername("admin");
       admin.setPassword("admin123"); // ToDo: Set username and pw as EnvVar
-      admin.setRoles(List.of("ROLE_ADMIN"));
+      admin.setRoles(List.of("ROLE_ADMIN", "ROLE_USER"));
       admin.setFirstName("Admin");
       admin.setLastName("Admin");
 

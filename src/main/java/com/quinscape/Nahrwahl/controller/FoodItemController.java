@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/foodItems")
+@PreAuthorize("hasRole('USER')")
 public class FoodItemController {
 
   private final FoodItemService foodItemService;
@@ -74,7 +76,8 @@ public class FoodItemController {
 
   @GetMapping("/{id}")
   public ResponseEntity<FoodItem> getFoodItemById(@PathVariable String id) {
-    return foodItemService.getFoodItemById(id)
+    return foodItemService
+        .getFoodItemById(id)
         .map(foodItem -> new ResponseEntity<>(foodItem, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
