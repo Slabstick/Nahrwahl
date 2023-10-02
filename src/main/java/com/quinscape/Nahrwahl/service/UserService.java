@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -174,5 +175,33 @@ public class UserService implements UserDetailsService {
         .stream()
         .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
   }
+
+  @Transactional
+  @PreAuthorize("#username == authentication.name")
+  public User updateUserProfile(String username, User userToUpdate) {
+    hashUserPassword(userToUpdate);
+    return userRepository
+        .findByUsername(username)
+        .map(existingUser -> {
+          Optional
+              .ofNullable(userToUpdate.getEmail())
+              .ifPresent(existingUser::setEmail);
+          Optional
+              .ofNullable(userToUpdate.getPassword())
+              .ifPresent(existingUser::setPassword);
+          Optional
+              .ofNullable(userToUpdate.getFirstName())
+              .ifPresent(existingUser::setFirstName);
+          Optional
+              .ofNullable(userToUpdate.getLastName())
+              .ifPresent(existingUser::setLastName);
+          return userRepository.save(existingUser);
+        })
+        .orElseThrow(() -> {
+          log.warn("User not found. Throwing exception!");
+          return new UsernameNotFoundException("User not found with username " + username);
+        });
+  }
+
 
 }
