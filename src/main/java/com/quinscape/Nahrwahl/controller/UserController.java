@@ -54,10 +54,10 @@ public class UserController {
   @PreAuthorize("hasRole('USER')")
   @PutMapping("/update")
   public ResponseEntity<User> updateUser(@RequestBody User userToUpdate, Principal principal) {
+    log.info("trying to update user " + principal.getName());
     User updated = userService.updateUserProfile(principal.getName(), userToUpdate);
 
     return new ResponseEntity<>(updated, HttpStatus.OK);
   }
 
-// ToDo: /update /logout?
 }

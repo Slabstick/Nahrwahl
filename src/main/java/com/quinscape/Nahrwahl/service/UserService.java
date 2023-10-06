@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -117,7 +116,7 @@ public class UserService implements UserDetailsService {
    */
   public Optional<User> getUserProfile(final String username) {
 
-    return findByUsername(username).map(this::sanitizeUser);
+    return findByUsername(username).map(this::sanitizeUserPassword);
   }
 
   /**
@@ -132,17 +131,17 @@ public class UserService implements UserDetailsService {
         .getAuthentication();
     final boolean isAdmin = isAdmin(authentication);
 
-    return isAdmin ? sanitizeUserForAdmin(user) : sanitizeUserForUser(user);
+    return isAdmin ? sanitizeUserPassword(user) : sanitizeUserPasswordAndNames(user);
 
   }
 
   /**
-   * Sanitizes the user information for a regular user role.
+   * Sanitizes the user information so password and both name fields are set to null.
    *
    * @param user The user to be sanitized.
    * @return The sanitized user.
    */
-  private User sanitizeUserForUser(final User user) {
+  private User sanitizeUserPasswordAndNames(final User user) {
     user.setPassword(null);
     user.setLastName(null);
     user.setFirstName(null);
@@ -151,12 +150,12 @@ public class UserService implements UserDetailsService {
   }
 
   /**
-   * Sanitizes the user information for an admin role.
+   * Sanitizes the user information. Only password is set to null.
    *
    * @param user The user to be sanitized.
    * @return The sanitized user.
    */
-  private User sanitizeUserForAdmin(final User user) {
+  private User sanitizeUserPassword(final User user) {
     user.setPassword(null);
 
     return user;
@@ -176,10 +175,28 @@ public class UserService implements UserDetailsService {
         .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
   }
 
+  /**
+   * Updates the profile of an existing user in the database.
+   * <p>
+   * This method performs an update on a user profile based on the provided username and
+   * userToUpdate object. If the password field of userToUpdate is not null, it will be hashed
+   * before updating. The other non-null fields of userToUpdate (email, first name, and last name)
+   * will be used to update the existing user profile. The method will sanitize the user object
+   * before returning.
+   * </p>
+   *
+   * @param username     the username of the user to be updated
+   * @param userToUpdate a User object containing the updated information
+   * @return the updated User object
+   * @throws UsernameNotFoundException if no user is found with the provided username
+   */
+
   @Transactional
-  @PreAuthorize("#username == authentication.name")
-  public User updateUserProfile(String username, User userToUpdate) {
-    hashUserPassword(userToUpdate);
+  public User updateUserProfile(String username, User userToUpdate)
+      throws UsernameNotFoundException {
+    if (userToUpdate.getPassword() != null) {
+      hashUserPassword(userToUpdate);
+    }
     return userRepository
         .findByUsername(username)
         .map(existingUser -> {
@@ -195,6 +212,7 @@ public class UserService implements UserDetailsService {
           Optional
               .ofNullable(userToUpdate.getLastName())
               .ifPresent(existingUser::setLastName);
+          sanitizeUserPassword(existingUser);
           return userRepository.save(existingUser);
         })
         .orElseThrow(() -> {
