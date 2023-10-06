@@ -158,6 +158,13 @@ public class UserService implements UserDetailsService {
         });
   }
 
+  /**
+   * Updates the existing user with the provided updated user information.
+   *
+   * @param existingUser the existing user to be updated
+   * @param userToUpdate the user object containing the updated information
+   * @return the updated User object
+   */
   private User updateExistingUser(User existingUser, User userToUpdate) {
     updateEmailIfNeeded(existingUser, userToUpdate);
     updateFirstNameIfNeeded(existingUser, userToUpdate);
@@ -166,19 +173,36 @@ public class UserService implements UserDetailsService {
     return userRepository.save(existingUser);
   }
 
-
+  /**
+   * Updates the email of the existing user if the updated user's email is not null.
+   *
+   * @param existingUser the existing user to be updated
+   * @param userToUpdate the user object containing the updated information
+   */
   private void updateEmailIfNeeded(User existingUser, User userToUpdate) {
     Optional
         .ofNullable(userToUpdate.getEmail())
         .ifPresent(existingUser::setEmail);
   }
 
+  /**
+   * Updates the first name of the existing user if the updated user's first name is not null.
+   *
+   * @param existingUser the existing user to be updated
+   * @param userToUpdate the user object containing the updated information
+   */
   private void updateFirstNameIfNeeded(User existingUser, User userToUpdate) {
     Optional
         .ofNullable(userToUpdate.getFirstName())
         .ifPresent(existingUser::setFirstName);
   }
 
+  /**
+   * Updates the last name of the existing user if the updated user's last name is not null.
+   *
+   * @param existingUser the existing user to be updated
+   * @param userToUpdate the user object containing the updated information
+   */
   private void updateLastNameIfNeeded(User existingUser, User userToUpdate) {
     Optional
         .ofNullable(userToUpdate.getLastName())
