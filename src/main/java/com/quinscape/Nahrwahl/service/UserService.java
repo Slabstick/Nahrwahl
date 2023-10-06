@@ -1,5 +1,6 @@
 package com.quinscape.Nahrwahl.service;
 
+import com.quinscape.Nahrwahl.exception.UserNotFoundException;
 import com.quinscape.Nahrwahl.exception.UsernameAlreadyExistsException;
 import com.quinscape.Nahrwahl.model.user.User;
 import com.quinscape.Nahrwahl.repository.UserRepository;
@@ -8,10 +9,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -116,37 +115,7 @@ public class UserService implements UserDetailsService {
    */
   public Optional<User> getUserProfile(final String username) {
 
-    return findByUsername(username).map(this::sanitizeUserPassword);
-  }
-
-  /**
-   * Sanitizes the user information based on the role.
-   *
-   * @param user The user to be sanitized.
-   * @return The sanitized user.
-   */
-  private User sanitizeUser(final User user) {
-    final Authentication authentication = SecurityContextHolder
-        .getContext()
-        .getAuthentication();
-    final boolean isAdmin = isAdmin(authentication);
-
-    return isAdmin ? sanitizeUserPassword(user) : sanitizeUserPasswordAndNames(user);
-
-  }
-
-  /**
-   * Sanitizes the user information so password and both name fields are set to null.
-   *
-   * @param user The user to be sanitized.
-   * @return The sanitized user.
-   */
-  private User sanitizeUserPasswordAndNames(final User user) {
-    user.setPassword(null);
-    user.setLastName(null);
-    user.setFirstName(null);
-
-    return user;
+    return findByUsername(username).map(this::sanitizeUser);
   }
 
   /**
@@ -155,7 +124,7 @@ public class UserService implements UserDetailsService {
    * @param user The user to be sanitized.
    * @return The sanitized user.
    */
-  private User sanitizeUserPassword(final User user) {
+  private User sanitizeUser(final User user) {
     user.setPassword(null);
 
     return user;
@@ -163,30 +132,16 @@ public class UserService implements UserDetailsService {
 
 
   /**
-   * Checks if the authenticated user has admin privileges.
-   *
-   * @param authentication The authentication object containing user's authorities.
-   * @return True if the user has admin role, false otherwise.
-   */
-  private boolean isAdmin(final Authentication authentication) {
-    return authentication
-        .getAuthorities()
-        .stream()
-        .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
-  }
-
-  /**
-   * Updates the profile of an existing user in the database.
+   * Updates the profile of an existing user in the database excluding the password.
    * <p>
    * This method performs an update on a user profile based on the provided username and
-   * userToUpdate object. If the password field of userToUpdate is not null, it will be hashed
-   * before updating. The other non-null fields of userToUpdate (email, first name, and last name)
-   * will be used to update the existing user profile. The method will sanitize the user object
-   * before returning.
+   * userToUpdate object. The non-null fields of userToUpdate (email, first name, and last name)
+   * will be used to update the existing user profile. The password field of userToUpdate is ignored
+   * in this method. A separate method should be used to update the password.
    * </p>
    *
    * @param username     the username of the user to be updated
-   * @param userToUpdate a User object containing the updated information
+   * @param userToUpdate a User object containing the updated information excluding the password
    * @return the updated User object
    * @throws UsernameNotFoundException if no user is found with the provided username
    */
@@ -194,31 +149,40 @@ public class UserService implements UserDetailsService {
   @Transactional
   public User updateUserProfile(String username, User userToUpdate)
       throws UsernameNotFoundException {
-    if (userToUpdate.getPassword() != null) {
-      hashUserPassword(userToUpdate);
-    }
     return userRepository
         .findByUsername(username)
-        .map(existingUser -> {
-          Optional
-              .ofNullable(userToUpdate.getEmail())
-              .ifPresent(existingUser::setEmail);
-          Optional
-              .ofNullable(userToUpdate.getPassword())
-              .ifPresent(existingUser::setPassword);
-          Optional
-              .ofNullable(userToUpdate.getFirstName())
-              .ifPresent(existingUser::setFirstName);
-          Optional
-              .ofNullable(userToUpdate.getLastName())
-              .ifPresent(existingUser::setLastName);
-          sanitizeUserPassword(existingUser);
-          return userRepository.save(existingUser);
-        })
+        .map(existingUser -> updateExistingUser(existingUser, userToUpdate))
         .orElseThrow(() -> {
           log.warn("User not found. Throwing exception!");
-          return new UsernameNotFoundException("User not found with username " + username);
+          return new UserNotFoundException("User not found with username " + username);
         });
+  }
+
+  private User updateExistingUser(User existingUser, User userToUpdate) {
+    updateEmailIfNeeded(existingUser, userToUpdate);
+    updateFirstNameIfNeeded(existingUser, userToUpdate);
+    updateLastNameIfNeeded(existingUser, userToUpdate);
+    sanitizeUser(existingUser);
+    return userRepository.save(existingUser);
+  }
+
+
+  private void updateEmailIfNeeded(User existingUser, User userToUpdate) {
+    Optional
+        .ofNullable(userToUpdate.getEmail())
+        .ifPresent(existingUser::setEmail);
+  }
+
+  private void updateFirstNameIfNeeded(User existingUser, User userToUpdate) {
+    Optional
+        .ofNullable(userToUpdate.getFirstName())
+        .ifPresent(existingUser::setFirstName);
+  }
+
+  private void updateLastNameIfNeeded(User existingUser, User userToUpdate) {
+    Optional
+        .ofNullable(userToUpdate.getLastName())
+        .ifPresent(existingUser::setLastName);
   }
 
 
