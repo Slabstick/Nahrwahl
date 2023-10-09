@@ -25,8 +25,10 @@ public class WebSecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
         .authorizeHttpRequests((authorize) -> authorize
-            .requestMatchers("/api/users/**")
+            .requestMatchers("/api/users/register")
             .permitAll()
+            .requestMatchers("/api/**")
+            .hasRole("USER")
             .anyRequest()
             .authenticated())
         .httpBasic(withDefaults())
