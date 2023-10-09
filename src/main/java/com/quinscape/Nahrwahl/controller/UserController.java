@@ -56,6 +56,7 @@ public class UserController {
   public ResponseEntity<User> updateUser(@RequestBody User userToUpdate, Principal principal) {
     log.info("trying to update user " + principal.getName());
     User updated = userService.updateUserProfile(principal.getName(), userToUpdate);
+    userService.sanitizeUser(updated);
 
     return new ResponseEntity<>(updated, HttpStatus.OK);
   }

@@ -43,13 +43,14 @@ public class DatabaseInitializer {
 
   @PostConstruct
   public void init() {
-    log.info("Initializer: Checking if admin exists.");
+    log.info("Creating default admin user if none exists.");
     Optional<User> optionalAdmin = userService.findByUsername("admin");
     if (optionalAdmin.isEmpty()) {
       User admin = createAdmin();
       userService.saveNewUser(admin);
     }
 
+    log.info("Creating default user if none exists.");
     Optional<User> optionalUser = userService.findByUsername("user");
     if (optionalUser.isEmpty()) {
       User user = createUser();

@@ -124,12 +124,11 @@ public class UserService implements UserDetailsService {
    * @param user The user to be sanitized.
    * @return The sanitized user.
    */
-  private User sanitizeUser(final User user) {
+  public User sanitizeUser(final User user) {
     user.setPassword(null);
 
     return user;
   }
-
 
   /**
    * Updates the profile of an existing user in the database excluding the password.
@@ -145,17 +144,17 @@ public class UserService implements UserDetailsService {
    * @return the updated User object
    * @throws UsernameNotFoundException if no user is found with the provided username
    */
-
   @Transactional
   public User updateUserProfile(String username, User userToUpdate)
       throws UsernameNotFoundException {
-    return userRepository
-        .findByUsername(username)
-        .map(existingUser -> updateExistingUser(existingUser, userToUpdate))
-        .orElseThrow(() -> {
-          log.warn("User not found. Throwing exception!");
-          return new UserNotFoundException("User not found with username " + username);
-        });
+    return userRepository.findByUsername(
+                             username) //ToDo: FindById, dann kann man username auch ändern
+                         .map(existingUser -> updateExistingUser(existingUser, userToUpdate))
+                         .orElseThrow(() -> {
+                           log.warn("User not found. Throwing exception!");
+                           return new UserNotFoundException(
+                               "User not found with username " + username);
+                         });
   }
 
   /**
@@ -169,8 +168,18 @@ public class UserService implements UserDetailsService {
     updateEmailIfNeeded(existingUser, userToUpdate);
     updateFirstNameIfNeeded(existingUser, userToUpdate);
     updateLastNameIfNeeded(existingUser, userToUpdate);
-    sanitizeUser(existingUser);
+    updatePasswordIfNeeded(existingUser, userToUpdate);
     return userRepository.save(existingUser);
+  }
+
+  private void updatePasswordIfNeeded(User existingUser, User userToUpdate) {
+    Optional
+        .ofNullable(userToUpdate.getPassword())
+        .ifPresent((password) -> {
+          log.info("Setting Password to " + password);
+          existingUser.setPassword(password);
+          hashUserPassword(existingUser);
+        });
   }
 
   /**
